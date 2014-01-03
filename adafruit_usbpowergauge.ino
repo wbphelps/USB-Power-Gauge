@@ -66,6 +66,7 @@ uint32_t  watt;
 uint8_t   count = 0;
 volatile  bool       doReport = false;
 volatile  uint16_t   intervals = 0;
+volatile  uint32_t   elapsed = 0;  // elapsed time since boot, in seconds
 
 volatile uint8_t x = 0;
 volatile uint8_t Lidx = 0, litLEDs = 0;
@@ -107,6 +108,7 @@ void TIMER1_Handler() {
 
   intervals++;
   if (intervals > TIMERSERIAL_INTERVALS_PER_SEC) {
+    elapsed++; // count seconds
     doReport = true;
     intervals = 0;
   }
@@ -246,6 +248,18 @@ void printDotDecimal(uint16_t x, uint8_t d) {
   }
 }
 
+void printTime(uint32_t t) {
+uint8_t m = t/60;
+uint8_t s = t%60;
+  if (m<10)
+    ts.print('0');
+  ts.print(m); // minutes
+  ts.print(':');
+  if (s<10)
+    ts.print('0');
+  ts.print(s);	
+}
+
 // the loop routine runs over and over again forever:
 void loop() {
   vcc += readVCC();
@@ -306,9 +320,11 @@ void loop() {
     icc = icc + count / 2;
     icc = icc/count;
 
+		printTime(elapsed);
+		
     watt = vcc * icc;
     watt /= 1000;
-    ts.print(F("V: "));
+    ts.print(F(" V: "));
     vcc += 50; // this is essentially a way to 'round up'
     printDotDecimal(vcc, 1);
     ts.print(F(" I: ")); 
